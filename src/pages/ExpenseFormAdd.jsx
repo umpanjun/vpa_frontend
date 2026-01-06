@@ -1,6 +1,6 @@
 // src/pages/ExpenseFormAdd.jsx
 import React, { useEffect, useState } from "react";
-import axios from "../api";                       // ✅ ใช้ axios instance กลางของโปรเจกต์
+import axios from "../services/api";                       // ✅ ใช้ axios instance กลางของโปรเจกต์
 import { useNavigate, useParams } from "react-router-dom";
 import { Save, ChevronLeft, Image as ImageIcon } from "lucide-react";
 import BottomNav from "../components/BottomNav";
@@ -102,7 +102,9 @@ const ExpenseFormAdd = () => {
       // ✅ ไม่ต้องตั้ง headers Authorization/Content-Type เอง
       await axios.post(`/api/expenses`, fd);
 
-      navigate(`/sites/${form.site_id}/expenses`);
+      // นำผู้ใช้กลับไปที่หน้าค่าใช้จ่ายของไซต์นั้น หรือหน้า Dashboard หากไม่มี Site ID
+      navigate(siteId ? `/sites/${siteId}/expenses` : "/");
+      
     } catch (err) {
       console.error("Add expense error:", err);
       const status = err?.response?.status;
@@ -125,7 +127,8 @@ const ExpenseFormAdd = () => {
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
         <div className="max-w-screen-sm mx-auto px-4 py-3 flex items-center">
           <button
-            onClick={() => navigate(-1)}
+            // ❗❗ [แก้ไข] เปลี่ยน navigate(-1) เป็น navigate('/') เพื่อกลับไปที่ Dashboard เสมอ
+            onClick={() => navigate("/")} 
             className="flex items-center gap-2 text-blue-600 hover:bg-gray-100 px-3 py-2 rounded-full"
           >
             <ChevronLeft className="w-6 h-6 stroke-[3]" />

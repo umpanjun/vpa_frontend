@@ -1,6 +1,6 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from "react";
-import axios from "../api";
+import axios from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import {
   User as UserIcon,
@@ -8,6 +8,7 @@ import {
   MapPin,
   LogOut,
   Users as UsersIcon,
+  FileText as AuditIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "../components/BottomNav";
@@ -183,9 +184,9 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Manage Users → admin เท่านั้น */}
+        {/* ปุ่มจัดการผู้ใช้ → admin เท่านั้น */}
         {role === "admin" && (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 flex flex-col items-center gap-3">
             <button
               onClick={() => navigate("/users/manage")}
               className="px-5 py-2 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition shadow-sm flex items-center gap-2"
@@ -195,6 +196,20 @@ const Dashboard = () => {
             </button>
           </div>
         )}
+
+        {/* ปุ่ม Audit logs → audit เท่านั้น */}
+        {role === "audit" && (
+          <div className="mt-4 flex flex-col items-center gap-3">
+            <button
+              onClick={() => navigate("/audit")}
+              className="px-5 py-2 rounded-full bg-amber-500 text-white hover:bg-amber-600 transition shadow-sm flex items-center gap-2"
+            >
+              <AuditIcon className="w-4 h-4" />
+              Audit logs
+            </button>
+          </div>
+        )}
+
       </div>
 
       <BottomNav />

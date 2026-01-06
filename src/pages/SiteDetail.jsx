@@ -1,10 +1,10 @@
 // src/pages/SiteDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Pencil, MapPin } from "lucide-react";
-import axios from "../api";
+import { ChevronLeft, Pencil, MapPin, Wallet } from "lucide-react"; // ✅ เพิ่ม icon Wallet
+import axios from "../services/api";
 import BottomNav from "../components/BottomNav";
-import { useAuth } from "../context/AuthContext";   // ✅ ดึง role มาจาก AuthContext
+import { useAuth } from "../context/AuthContext";
 
 const API = import.meta.env.VITE_API_BASE;
 
@@ -15,6 +15,15 @@ const TYPE_LABEL = {
   Transportation: "ค่าขนส่ง",
   Utilities: "ค่าสาธารณูปโภค",
   Other: "อื่นๆ",
+};
+
+// ฟังก์ชันจัดรูปแบบเงิน
+const formatMoney = (amount) => {
+  return Number(amount || 0).toLocaleString("th-TH", {
+    style: "currency",
+    currency: "THB",
+    maximumFractionDigits: 0,
+  });
 };
 
 function ProgressBar({ value }) {
@@ -29,37 +38,30 @@ function ProgressBar({ value }) {
   );
 }
 
-function MoneyBox({ label, amount }) {
-  const formatted =
-    typeof amount === "number"
-      ? amount.toLocaleString("th-TH", {
-          style: "currency",
-          currency: "THB",
-          maximumFractionDigits: 0,
-        })
-      : "—";
+function MoneyBox({ label, amount, isNegative = false }) {
+  const formatted = formatMoney(amount);
   return (
     <div className="flex items-center justify-between border rounded-xl px-4 py-3 bg-white">
       <div className="text-gray-700 text-sm">{label}</div>
-      <div className="font-semibold text-blue-900 text-sm">{formatted}</div>
+      <div className={`font-semibold text-sm ${isNegative ? "text-red-600" : "text-blue-900"}`}>
+        {formatted}
+      </div>
     </div>
   );
 }
 
-// ✅ แปลง image_url จาก DB → src พร้อมใช้งาน (เหมือนใน Dashboard)
 const resolveSiteImage = (image_url) => {
   if (!image_url) return "https://picsum.photos/800/400?blur=2";
   const url = String(image_url);
-  if (/^https?:\/\//i.test(url)) return url;            // URL เต็ม
-  if (url.startsWith("/uploads")) return `${API}${url}`; // พาธเริ่ม /uploads
-  return `${API}/uploads/sites/${url}`;                  // ชื่อไฟล์ล้วน
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/uploads")) return `${API}${url}`;
+  return `${API}/uploads/sites/${url}`;
 };
-
 
 export default function SiteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();   // ✅ ดึง role ของ user
+  const { user } = useAuth();
   const role = user?.role;
 
   const [site, setSite] = useState(null);
@@ -102,6 +104,12 @@ export default function SiteDetail() {
 
   const cover = resolveSiteImage(site.image_url);
 
+  // ✅ คำนวณงบประมาณ
+  const totalBudget = Number(site.budget || 0); // ต้องมั่นใจว่า Backend ส่ง budget มาด้วย
+  const totalUsed = expenseSummary.reduce((sum, item) => sum + Number(item.total_amount), 0);
+  const remainingBudget = totalBudget - totalUsed;
+  const isOverBudget = remainingBudget < 0;
+
   return (
     <div className="min-h-screen bg-white pb-24">
       {/* Top bar */}
@@ -111,7 +119,7 @@ export default function SiteDetail() {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-100"
           >
-            <ChevronLeft className="w-6 h-6 stroke-[3]  text-blue-600  " />
+            <ChevronLeft className="w-6 h-6 stroke-[3] text-blue-600" />
             <span className="text-lg font-medium text-blue-600">Back</span>
           </button>
 
@@ -126,7 +134,6 @@ export default function SiteDetail() {
               </button>
             )}
 
-            {/* ✅ ปุ่มแก้ไขไซต์งาน: แสดงเฉพาะ CEO และ Admin */}
             {(role === "CEO" || role === "admin") && (
               <button
                 onClick={() => navigate(`/sites/${id}/edit`)}
@@ -141,10 +148,8 @@ export default function SiteDetail() {
       </div>
 
       <div className="mx-auto max-w-md md:max-w-2xl px-4">
-        {/* Title */}
         <h1 className="text-2xl font-extrabold mt-2">{site.site_name}</h1>
 
-        {/* Cover */}
         <div className="rounded-2xl overflow-hidden mt-4 border">
           <img src={cover} alt={site.site_name} className="w-full h-48 object-cover" />
         </div>
@@ -159,7 +164,6 @@ export default function SiteDetail() {
             </div>
             <ProgressBar value={progress.overall} />
           </div>
-          {/* Breakdown */}
           {progress.breakdown && (
             <div className="space-y-3">
               <div>
@@ -187,12 +191,42 @@ export default function SiteDetail() {
           )}
         </div>
 
-        {/* ✅ แสดงสรุปค่าใช้จ่าย + ค่าใช้จ่ายล่าสุด */}
+        {/* ✅ ส่วนการเงิน (งบประมาณ + สรุปค่าใช้จ่าย) */}
         {(role === "CEO" || role === "admin" || role === "Secretary") && (
           <>
+            {/* ✅ 1. แสดงรายละเอียดงบประมาณ (ใหม่) */}
+            <div className="mt-6 bg-blue-50/50 border border-blue-100 rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-blue-900 font-semibold mb-3">
+                <Wallet className="w-5 h-5" />
+                รายละเอียดงบประมาณ
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">งบประมาณตั้งต้น</span>
+                  <span className="font-bold text-gray-900">{formatMoney(totalBudget)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">ใช้ไปแล้วจริง</span>
+                  <span className="font-bold text-red-600">-{formatMoney(totalUsed)}</span>
+                </div>
+                
+                <div className="border-t border-blue-200 my-2"></div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 font-medium">คงเหลือ</span>
+                  <span className={`font-bold text-lg ${isOverBudget ? "text-red-600" : "text-green-600"}`}>
+                    {formatMoney(remainingBudget)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. สรุปค่าใช้จ่ายตามหมวดหมู่ (เดิม) */}
             {expenseSummary.length > 0 && (
               <div className="mt-6">
-                <div className="text-gray-700 font-semibold mb-3">สรุปค่าใช้จ่าย</div>
+                <div className="text-gray-700 font-semibold mb-3">สรุปค่าใช้จ่ายตามหมวดหมู่</div>
                 <div className="grid gap-3">
                   {expenseSummary.map((sum) => (
                     <MoneyBox
@@ -205,6 +239,7 @@ export default function SiteDetail() {
               </div>
             )}
 
+            {/* 3. ค่าใช้จ่ายล่าสุด (เดิม) */}
             <div className="mt-6">
               <div className="text-gray-700 font-semibold mb-3">ค่าใช้จ่ายล่าสุด</div>
               <div className="grid gap-3">
@@ -242,7 +277,6 @@ export default function SiteDetail() {
         </div>
       </div>
 
-      {/* ✅ Floating Action Button (เฉพาะ CEO/Admin/Foreman เท่านั้น) */}
       {(role === "CEO" || role === "admin" || role === "Foreman") && (
         <button
           onClick={() => navigate(`/sites/${id}/progress/edit`)}

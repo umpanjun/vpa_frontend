@@ -2,12 +2,19 @@
 FROM node:20 AS build
 WORKDIR /app
 
-# ติดตั้ง dependency
+# copy package.json
 COPY package*.json ./
+
+# ติดตั้ง dependency
 RUN npm install
 
 # copy source code ทั้งหมด
 COPY . .
+
+# fix permission ให้ vite binary ใช้ได้
+RUN chmod -R 755 /app/node_modules/.bin
+
+# build
 RUN npm run build
 
 # Step 2: ใช้ nginx serve frontend

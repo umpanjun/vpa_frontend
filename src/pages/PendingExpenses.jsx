@@ -1,7 +1,7 @@
 // src/pages/PendingExpenses.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../api";
+import axios from "../services/api";
 import { ChevronLeft, Upload } from "lucide-react";
 import {
   ArrowLeft,
@@ -169,7 +169,8 @@ function PendingExpenses() {
                     <p className="text-sm text-gray-600">
                       ผู้ขอ:{" "}
                       <span className="font-medium">
-                        {e.requested_by_display || "-"}
+                        {/* ❗❗ การแก้ไข: ใช้ Field ชื่อ 'requested_by_name' แทน 'requested_by_display' */}
+                        {e.requested_by_name || "-"} 
                       </span>
                     </p>
                     <p className="text-sm text-gray-600 mb-2">
@@ -228,6 +229,10 @@ function PendingExpenses() {
                 )}
 
                 {/* Actions */}
+                {/* NOTE: Frontend ใช้ "Secretary" (ขึ้นต้นตัวใหญ่)
+                  Backend ใช้ 'secretary' (ตัวเล็ก)
+                  ถ้าเกิดปัญหา 403 Forbidden ในการอนุมัติ ให้แก้ไข Role ให้ตรงกัน
+                */}
                 {["admin", "ceo", "Secretary"].includes(user?.role) && (
                   <div className="flex gap-2 mt-4 justify-end">
                     <button

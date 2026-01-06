@@ -2,12 +2,44 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Users, Plus, Pencil, Trash2 } from "lucide-react";   // ✅ import Trash2
+import { Users, Plus, Pencil, Trash2 } from "lucide-react";
 import BottomNav from "../components/BottomNav";
 import { useAuth } from "../context/AuthContext";
 
 const API = import.meta.env.VITE_API_BASE;
 axios.defaults.withCredentials = true;
+
+// -----------------------------------------------------------------
+// 🛠️ 1. Custom Confirmation Modal Component (อย่างง่าย)
+// -----------------------------------------------------------------
+const DeleteConfirmModal = ({ workerName, onConfirm, onClose, disabled }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+      <div className="bg-white rounded-lg shadow-xl max-w-sm mx-4 p-6 w-full">
+        <h3 className="text-lg font-bold text-gray-800 mb-2">ยืนยันการลบพนักงาน</h3>
+        <p className="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบพนักงานชื่อ: <strong>{workerName}</strong>?</p>
+        
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-semibold rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+            disabled={disabled}
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 text-sm font-semibold rounded-md text-white ${disabled ? "bg-red-300" : "bg-red-600 hover:bg-red-700"} transition`}
+            disabled={disabled}
+          >
+            {disabled ? 'กำลังดำเนินการ...' : 'ยืนยันการลบ'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+// -----------------------------------------------------------------
 
 const Avatar = ({ name = "" }) => {
   const initials = name
@@ -27,6 +59,10 @@ const AllWorkers = () => {
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  
+  // 🛠️ 2. State ใหม่สำหรับจัดการ Modal: เก็บข้อมูลพนักงานที่ต้องการลบ
+  const [confirmModalData, setConfirmModalData] = useState(null); // { workerId: number, name: string }
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const canManage = ["admin", "ceo", "secretary"].includes(user?.role);
@@ -36,12 +72,10 @@ const AllWorkers = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      // ✅ ขอเฉพาะที่ active จาก backend (ถ้ารองรับ)
       const res = await axios.get(`${API}/api/workers?active=true`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // ✅ กันเหนียว: ถ้า backend ยังส่งที่ไม่ active มา ก็กรองฝั่ง client อีกชั้น
       const list = Array.isArray(res.data?.data) ? res.data.data : [];
       const onlyActive = list.filter((w) => w.is_active !== false && w.status !== "inactive");
       setWorkers(onlyActive);
@@ -56,9 +90,16 @@ const AllWorkers = () => {
     fetchWorkers();
   }, []);
 
-  // ✅ ลบแบบ hard (ถ้า backend รองรับ ?hard=true) + อัปเดต state และรีเฟรชก็ไม่กลับ
+  // 🛠️ 3. ฟังก์ชันใหม่: เปิด Modal แทน window.confirm
+  const handleConfirmDelete = (workerId, displayName) => {
+    setConfirmModalData({ workerId, name: displayName });
+  };
+  
+  // 🛠️ 4. ฟังก์ชันหลัก: การลบจริง (ถูกเรียกจาก Modal)
   const handleDelete = async (workerId) => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบพนักงานคนนี้?")) return;
+    // ปิด Modal ก่อน
+    setConfirmModalData(null); 
+    
     try {
       setDeletingId(workerId);
       const token = localStorage.getItem("token");
@@ -145,9 +186,10 @@ const AllWorkers = () => {
                       <Pencil className={`w-4 h-4 ${disabled ? "text-gray-300" : "text-gray-600"}`} />
                     </button>
                     <button
+                      // 🛠️ 5. แก้ไข: เรียกฟังก์ชันเปิด Modal
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(w.worker_id);
+                        handleConfirmDelete(w.worker_id, displayName);
                       }}
                       className={`p-2 rounded-full hover:bg-red-100 active:bg-red-200 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                       title={disabled ? "กำลังลบ..." : "ลบพนักงาน"}
@@ -181,6 +223,16 @@ const AllWorkers = () => {
       )}
 
       <BottomNav active="users" />
+
+      {/* 🛠️ 6. แสดง Modal เมื่อ State มีค่า */}
+      {confirmModalData && (
+        <DeleteConfirmModal
+          workerName={confirmModalData.name}
+          onConfirm={() => handleDelete(confirmModalData.workerId)}
+          onClose={() => setConfirmModalData(null)}
+          disabled={deletingId === confirmModalData.workerId}
+        />
+      )}
     </div>
   );
 };

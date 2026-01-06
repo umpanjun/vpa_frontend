@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Upload, Image as ImageIcon } from "lucide-react";
-import axios from "../api";
+import axios from "../services/api";
 
 export default function SiteProgressEdit() {
   const { id } = useParams();

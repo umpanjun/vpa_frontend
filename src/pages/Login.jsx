@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
-import axios from "../api";                // ✅ ใช้ instance เดียวกับโปรเจกต์ (baseURL + withCredentials)
+import axios from "../services/api";                // ✅ ใช้ instance เดียวกับโปรเจกต์ (baseURL + withCredentials)
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 

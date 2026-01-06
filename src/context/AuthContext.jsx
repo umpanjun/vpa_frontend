@@ -1,6 +1,6 @@
 // Frontend/src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "../api"; // ✅ ใช้ instance axios ที่มี API_BASE
+import axios from "../services/api"; // ✅ ใช้ instance axios ที่มี API_BASE
 
 const AuthContext = createContext();
 

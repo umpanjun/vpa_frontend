@@ -1,6 +1,7 @@
+// src/App.jsx
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -17,54 +18,99 @@ import SiteProgressEdit from "./pages/SiteProgressEdit";
 
 // ✅ หน้าใหม่
 import ExpenseSummary from "./pages/ExpenseSummary";
-import ExpenseFormAdd from "./pages/ExpenseFormAdd";   // <--- ฟอร์มเพิ่มบิล
-import Profile from "./pages/Profile";                 // ✅ โปรไฟล์
+import ExpenseFormAdd from "./pages/ExpenseFormAdd"; // <--- ฟอร์มเพิ่มบิล
+import Profile from "./pages/Profile"; // ✅ โปรไฟล์
 import PendingExpenses from "./pages/PendingExpenses";
-
+import ExpenseDetail from "./pages/ExpenseDetail.jsx";
 // ✅ Admin manage users
 import UserManage from "./pages/UserManage";
-import UserFormEdit from "./pages/UserFormEdit";       // ✅ เพิ่มไฟล์แก้ไขผู้ใช้
+import UserFormEdit from "./pages/UserFormEdit"; // ✅ เพิ่มไฟล์แก้ไขผู้ใช้
 import UserFormAdd from "./pages/UserFormAdd";
+
+// Audit page
+import Audit from "./pages/Audit";
+
+/**
+ * RoleRoute - wrapper component to protect routes by allowed roles
+ * Usage: <RoleRoute allowedRoles={['admin','audit']}><Audit /></RoleRoute>
+ */
+function RoleRoute({ children, allowedRoles = [] }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return null; // หรือ spinner ขณะเช็ก token
+
+  if (!user) {
+    // ถ้ายังไม่ล็อกอิน -> ไปหน้า login
+    return <Navigate to="/login" replace />;
+  }
+
+  // ถ้า user.role ไม่มีใน allowedRoles -> ไป dashboard หรือหน้า 403
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Auth */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Dashboard */}
+      <Route path="/dashboard" element={<Dashboard />} />
+
+      {/* Site detail & related */}
+      <Route path="/sites/:id" element={<SiteDetail />} />
+      <Route path="/sites/:id/expenses" element={<ExpensesReport />} />
+      <Route path="/sites/:id/expenses/add" element={<ExpenseFormAdd />} />
+      <Route path="/sites/:id/workers" element={<WorkersBySite />} />
+      <Route path="/sites/add" element={<SiteAdd />} />
+      <Route path="/sites/:id/edit" element={<SiteEdit />} />
+      <Route path="/sites/:id/progress/edit" element={<SiteProgressEdit />} />
+
+      {/* Workers */}
+      <Route path="/workers" element={<AllWorkers />} />
+      <Route path="/workers/add" element={<WorkerFormAdd />} />
+      <Route path="/workers/:id" element={<WorkerDetail />} />
+      <Route path="/workers/:id/edit" element={<WorkerFormEdit />} />
+
+      {/* Expense Summary */}
+      <Route path="/expenses/summary" element={<ExpenseSummary />} />
+      <Route path="/expenses/pending" element={<PendingExpenses />} />
+      <Route path="/expenses" element={<ExpenseDetail />} />
+      <Route path="/sites/:siteId/expenses" element={<ExpenseDetail />} />
+
+      {/* Profile */}
+      <Route path="/profile" element={<Profile />} />
+
+      {/* ✅ Admin Manage Users */}
+      <Route path="/users/manage" element={<UserManage />} />
+      <Route path="/users/:id/edit" element={<UserFormEdit />} />
+      <Route path="/users/add" element={<UserFormAdd />} />
+
+      {/* Audit: อนุญาตให้ admin และ audit เข้าได้ */}
+      <Route
+        path="/audit"
+        element={
+          <RoleRoute allowedRoles={["admin", "audit"]}>
+            <Audit />
+          </RoleRoute>
+        }
+      />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Auth */}
-          <Route path="/login" element={<Login />} />
-
-          {/* Dashboard */}
-          <Route path="/dashboard" element={<Dashboard />} />
-
-          {/* Site detail & related */}
-          <Route path="/sites/:id" element={<SiteDetail />} />
-          <Route path="/sites/:id/expenses" element={<ExpensesReport />} />
-          <Route path="/sites/:id/expenses/add" element={<ExpenseFormAdd />} /> 
-          <Route path="/sites/:id/workers" element={<WorkersBySite />} />
-          <Route path="/sites/add" element={<SiteAdd />} />
-          <Route path="/sites/:id/edit" element={<SiteEdit />} />
-          <Route path="/sites/:id/progress/edit" element={<SiteProgressEdit />} />
-
-          {/* Workers */}
-          <Route path="/workers" element={<AllWorkers />} />
-          <Route path="/workers/add" element={<WorkerFormAdd />} />
-          <Route path="/workers/:id" element={<WorkerDetail />} />
-          <Route path="/workers/:id/edit" element={<WorkerFormEdit />} />
-
-          {/* Expense Summary */}
-          <Route path="/expenses/summary" element={<ExpenseSummary />} />
-          <Route path="/expenses/pending" element={<PendingExpenses />} />
-
-          {/* Profile */}
-          <Route path="/profile" element={<Profile />} />
-
-          {/* ✅ Admin Manage Users */}
-          <Route path="/users/manage" element={<UserManage />} />
-          <Route path="/users/:id/edit" element={<UserFormEdit />} /> {/* ✅ route ใหม่ */}
-          <Route path="/users/add" element={<UserFormAdd />} />
-          {/* Fallback */}
-          <Route path="*" element={<Dashboard />} />
-        </Routes>
+        <AppRoutes />
       </Router>
     </AuthProvider>
   );

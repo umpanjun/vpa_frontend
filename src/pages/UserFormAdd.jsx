@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../api";
+import axios from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import BottomNav from "../components/BottomNav";
@@ -7,7 +7,7 @@ import BottomNav from "../components/BottomNav";
 const API = import.meta.env.VITE_API_BASE;
 axios.defaults.withCredentials = true;
 
-const roles = ["admin", "CEO", "Secretary", "Foreman"];
+const roles = ["admin", "CEO", "Secretary", "Foreman","audit"];
 
 
 const UserFormAdd = () => {

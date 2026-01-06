@@ -1,7 +1,7 @@
 // src/pages/Profile.jsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import axios from "../api";
+import axios from "../services/api";
 import { Pencil, Save, X, Camera } from "lucide-react";
 import BottomNav from "../components/BottomNav";
 

@@ -1,7 +1,7 @@
 // src/pages/SiteEdit.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios, { API_BASE_URL } from "../api";
+import axios, { API_BASE_URL } from "../services/api";
 import { ChevronLeft } from "lucide-react";
 import BottomNav from "../components/BottomNav";
 
