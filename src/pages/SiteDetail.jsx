@@ -140,7 +140,7 @@ export default function SiteDetail() {
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-blue-600 text-white"
               >
                 <Pencil className="w-4 h-4" />
-                แก้ไข
+                แก้ไขไซต์งาน
               </button>
             )}
           </div>
@@ -277,15 +277,18 @@ export default function SiteDetail() {
         </div>
       </div>
 
-      {(role === "CEO" || role === "admin" || role === "Foreman") && (
-        <button
-          onClick={() => navigate(`/sites/${id}/progress/edit`)}
-          className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-purple-600 text-white shadow-lg flex items-center justify-center hover:bg-purple-700 active:scale-95 transition"
-          title="แก้ไขความคืบหน้า"
-        >
-          <Pencil className="w-6 h-6" />
-        </button>
-      )}
+
+{(role === "CEO" || role === "admin" || role === "Foreman") && (
+  <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50">
+    <button
+      onClick={() => navigate(`/sites/${id}/progress/edit`)}
+      className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full shadow-[0_8px_20px_rgba(37,99,235,0.3)] hover:bg-blue-700 active:scale-95 transition-all whitespace-nowrap border border-white/20"
+    >
+      <Pencil className="w-4 h-4" />
+      <span className="font-bold text-sm">อัปเดทความคืบหน้าไซต์งาน</span>
+    </button>
+  </div>
+)}
 
       <BottomNav active="home" />
     </div>

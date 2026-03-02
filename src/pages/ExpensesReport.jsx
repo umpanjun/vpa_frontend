@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../services/api";
-// ❗ การแก้ไข 1: เพิ่ม Icon Download
-import { ChevronLeft, Plus, AlertTriangle, Download } from "lucide-react";
+import { ChevronLeft, Plus, AlertTriangle } from "lucide-react";
 import BottomNav from "../components/BottomNav";
 import { useAuth } from "../context/AuthContext"; 
 
@@ -44,7 +43,6 @@ export default function ExpensesReport() {
   };
 
   useEffect(() => {
-    // โหลดข้อมูลเมื่อไม่ใช่ role Foreman (เพราะ Foreman ไม่มีสิทธิ์ดู)
     if (user?.role !== "Foreman") {
       loadData();
     } else {
@@ -53,75 +51,25 @@ export default function ExpensesReport() {
   }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = expenses.reduce((acc, cur) => acc + Number(cur.amount || 0), 0);
-  
-  // ❗ การแก้ไข 2: เพิ่มฟังก์ชัน Export
-  const handleExport = async () => {
-    try {
-      // 🚨 สมมติว่า Backend มี API สำหรับ Export รายงาน Excel
-      const url = `/api/expenses/${id}/export/excel`;
-      
-      const res = await axios.get(url, {
-        responseType: 'blob', // ตั้งค่าให้รับ response เป็น Binary (Blob)
-      });
 
-      // ดึงชื่อไฟล์จาก Header (ถ้ามี) หรือตั้งชื่อเอง
-      const contentDisposition = res.headers['content-disposition'];
-      let filename = `Expenses_Report_${site?.site_name || id}_${new Date().toLocaleDateString('th-TH')}.xlsx`;
-      
-      if (contentDisposition) {
-        const matches = /filename="([^"]+)"/i.exec(contentDisposition);
-        if (matches && matches[1]) {
-          filename = matches[1];
-        }
-      }
-      
-      // สร้าง URL ชั่วคราวสำหรับ Blob และสั่งดาวน์โหลด
-      const blob = new Blob([res.data], { type: res.headers['content-type'] });
-      
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-
-      alert(`กำลังดาวน์โหลดไฟล์ ${filename}`);
-    } catch (e) {
-      console.error("Export error:", e);
-      alert("ไม่สามารถสร้างไฟล์รายงานได้ กรุณาตรวจสอบการตั้งค่า API Backend");
-    }
-  };
-
-
-  if (loading) return <div className="p-4">กำลังโหลด...</div>;
+  if (loading) return <div className="p-4 text-center text-gray-500">กำลังโหลด...</div>;
 
   return (
-    <div className="min-h-screen bg-white pb-28 ">
+    <div className="min-h-screen bg-white pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
-        <div className="max-w-screen-sm mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
+        <div className="max-w-screen-sm mx-auto px-4 py-3 flex items-center relative h-16">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-100"
+            className="inline-flex items-center gap-1 text-blue-600 font-bold hover:bg-blue-50 px-2 py-1 rounded-lg transition"
           >
-            <ChevronLeft className="w-6 h-6 stroke-[3]  text-blue-600   " />
-            <span className="text-lg font-medium text-blue-600">Back</span>
+            <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+            <span>Back</span>
           </button>
 
-          <h1 className="text-lg font-bold flex-1 text-center">รายงานค่าใช้จ่าย</h1>
-          
-          {/* ❗ การแก้ไข 3: เพิ่มปุ่มดาวน์โหลด */}
-          {user?.role !== "Foreman" && (
-            <button
-              onClick={handleExport} // เรียกฟังก์ชันดาวน์โหลด
-              className="px-2 py-1 rounded-full text-blue-600 hover:bg-gray-100 transition"
-              title="ดาวน์โหลดรายงาน"
-            >
-              <Download className="w-6 h-6" />
-            </button>
-          )}
-
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-black text-gray-800 whitespace-nowrap">
+            รายงานค่าใช้จ่าย
+          </h1>
         </div>
       </div>
 
@@ -130,141 +78,145 @@ export default function ExpensesReport() {
         {/* Site Info */}
         {site && (
           <div className="mb-2">
-            <h2 className="text-xl font-bold text-blue-900">
+            <h2 className="text-xl font-black text-blue-900 leading-tight">
               {site.site_name}
             </h2>
             {site.site_address && (
-              <p className="text-gray-500 text-sm">{site.site_address}</p>
+              <p className="text-gray-500 text-sm mt-1">{site.site_address}</p>
             )}
           </div>
         )}
 
-        {/* 🚫 Foreman → ไม่เห็นข้อมูลรายจ่าย */}
+        {/* 🚫 Foreman Access Control */}
         {user?.role === "Foreman" ? (
-          <div className="flex flex-col items-center text-center py-12">
-            <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+          <div className="flex flex-col items-center text-center py-16 bg-gray-50 rounded-[2.5rem] px-6 border border-gray-100 shadow-inner">
+            <div className="bg-red-50 p-4 rounded-full mb-4">
+              <AlertTriangle className="w-10 h-10 text-red-500" />
+            </div>
             <h2 className="text-lg font-bold text-red-600 mb-2">
               คุณไม่มีสิทธิ์ดูรายละเอียดค่าใช้จ่าย
             </h2>
-            <p className="text-gray-600 text-sm">
-              แต่คุณสามารถเพิ่มบิลค่าใช้จ่ายเพื่อส่งคำขออนุมัติได้
+            <p className="text-gray-500 text-sm">
+              คุณสามารถเพิ่มบิลค่าใช้จ่ายใหม่เพื่อส่งคำขออนุมัติได้ที่ปุ่มด้านล่าง
             </p>
           </div>
         ) : (
           <>
             {/* Note */}
-            <p className="text-xs text-gray-500 italic">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">
               * แสดงเฉพาะบิลที่อนุมัติแล้ว
             </p>
 
             {/* Summary by type */}
             <div>
-              <h2 className="font-semibold mb-3 mt-2 text-gray-700">
+              <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-3">
                 สรุปตามประเภท
               </h2>
               {summary.length === 0 ? (
-                <div className="text-gray-500 text-center py-4 bg-gray-50 rounded-xl">
-                  ไม่มีข้อมูล
+                <div className="text-gray-400 text-center py-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                  ไม่มีข้อมูลค่าใช้จ่าย
                 </div>
               ) : (
-                <ul className="divide-y rounded-xl border bg-white shadow-sm">
-                  {summary.map((s) => (
-                    <li
+                <div className="rounded-[2rem] border border-gray-100 bg-white shadow-sm overflow-hidden">
+                  {summary.map((s, index) => (
+                    <div
                       key={s.expense_type}
-                      className="flex justify-between py-3 px-4 text-sm"
+                      className={`flex justify-between py-4 px-6 text-sm ${
+                        index !== summary.length - 1 ? 'border-b border-gray-50' : ''
+                      }`}
                     >
-                      <span className="font-medium">
+                      <span className="font-bold text-gray-600">
                         {TYPE_LABEL[s.expense_type] || s.expense_type}
                       </span>
-                      <span className="text-blue-900 font-semibold">
+                      <span className="text-blue-600 font-black">
                         {Number(s.total_amount).toLocaleString("th-TH", {
                           style: "currency",
                           currency: "THB",
                           maximumFractionDigits: 0,
                         })}
                       </span>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
 
             {/* Expense List */}
             <div>
-              <h2 className="font-semibold mb-3 text-gray-700">ทุกรายการ</h2>
+              <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-3">
+                ทุกรายการ
+              </h2>
               {expenses.length === 0 ? (
-                <div className="text-gray-500 text-center py-4 bg-gray-50 rounded-xl">
+                <div className="text-gray-400 text-center py-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
                   ไม่มีรายการค่าใช้จ่าย
                 </div>
               ) : (
-                <ul className="space-y-3">
+                <div className="space-y-4">
                   {expenses.map((e) => (
-                    <li
+                    <div
                       key={e.expense_id}
-                      className="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition"
+                      className="border border-gray-100 rounded-[2rem] p-5 bg-white shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
                     >
-                      <div className="flex justify-between">
-                        <span className="font-medium">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md tracking-tighter">
                           {TYPE_LABEL[e.expense_type] || e.expense_type}
                         </span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-[11px] font-bold text-gray-400">
                           {e.expense_date
                             ? new Date(e.expense_date).toLocaleDateString("th-TH")
                             : "-"}
                         </span>
                       </div>
-                      <p className="text-gray-600">{e.description || "-"}</p>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-gray-500 text-sm">
-                          {e.vendor_name ? `ผู้ขาย: ${e.vendor_name}` : ""}
+                      <p className="font-bold text-gray-800">{e.description || "-"}</p>
+                      <div className="flex justify-between items-end mt-4">
+                        <span className="text-xs font-bold text-gray-400 italic">
+                          {e.vendor_name ? `@ ${e.vendor_name}` : ""}
                         </span>
-                        <span className="font-bold text-blue-900">
-                          {Number(e.amount).toLocaleString("th-TH", {
-                            style: "currency",
-                            currency: "THB",
-                            maximumFractionDigits: 0,
-                          })}
-                        </span>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-blue-900">
+                            {Number(e.amount).toLocaleString("th-TH", {
+                              style: "currency",
+                              currency: "THB",
+                              maximumFractionDigits: 0,
+                            })}
+                          </p>
+                          <span className={`text-[10px] font-bold uppercase ${
+                            e.status === "Approved" ? "text-green-500" : 
+                            e.status === "Rejected" ? "text-red-500" : "text-orange-500"
+                          }`}>
+                            {e.status}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs mt-1">
-                        สถานะ:{" "}
-                        <span
-                          className={
-                            e.status === "Approved"
-                              ? "text-green-600"
-                              : e.status === "Rejected"
-                              ? "text-red-600"
-                              : "text-yellow-600"
-                          }
-                        >
-                          {e.status}
-                        </span>
-                      </p>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
-              <div className="mt-4 font-bold text-right text-lg text-blue-900">
-                รวมทั้งหมด:{" "}
-                {total.toLocaleString("th-TH", {
-                  style: "currency",
-                  currency: "THB",
-                  maximumFractionDigits: 0,
-                })}
+              
+              {/* Grand Total Footer */}
+              <div className="mt-8 p-6 bg-blue-900 rounded-[2rem] text-white flex justify-between items-center shadow-xl shadow-blue-900/20">
+                <span className="font-bold text-sm uppercase tracking-widest">รวมค่าใช้จ่ายทั้งสิ้น</span>
+                <span className="text-2xl font-black">
+                  {total.toLocaleString("th-TH", {
+                    style: "currency",
+                    currency: "THB",
+                    maximumFractionDigits: 0,
+                  })}
+                </span>
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* ✅ ปุ่มเพิ่มบิล (อยู่ตรงกลางล่างสุด) */}
-      <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2">
+      {/* ✅ ปุ่มเพิ่มบิล (Floating Action Button) */}
+      <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50">
         <button
           onClick={() => navigate(`/sites/${id}/expenses/add`)}
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition"
+          className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-blue-600 text-white font-black shadow-[0_12px_30px_rgba(37,99,235,0.4)] hover:bg-blue-700 active:scale-95 transition-all border-2 border-white/20 whitespace-nowrap"
         >
-          <Plus className="w-5 h-5" />
-          เพิ่มบิลค่าใช้จ่าย
+          <Plus className="w-5 h-5 stroke-[3]" />
+          <span>เพิ่มบิลค่าใช้จ่าย</span>
         </button>
       </div>
 

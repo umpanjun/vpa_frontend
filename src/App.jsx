@@ -15,7 +15,7 @@ import WorkerFormEdit from "./pages/WorkerFormEdit";
 import SiteAdd from "./pages/SiteAdd";
 import SiteEdit from "./pages/SiteEdit";
 import SiteProgressEdit from "./pages/SiteProgressEdit";
-
+import SiteHistory from "./pages/SiteHistory";
 // ✅ หน้าใหม่
 import ExpenseSummary from "./pages/ExpenseSummary";
 import ExpenseFormAdd from "./pages/ExpenseFormAdd"; // <--- ฟอร์มเพิ่มบิล
@@ -29,6 +29,11 @@ import UserFormAdd from "./pages/UserFormAdd";
 
 // Audit page
 import Audit from "./pages/Audit";
+
+// ✅ นำเข้าหน้ารายรับ (Incomes) ที่เพิ่มเข้ามาใหม่
+import IncomeSummary from "./pages/IncomeSummary";
+import IncomeFormAdd from "./pages/IncomeFormAdd"; // ไฟล์ฟอร์มบันทึกรายรับ
+import IncomeHistory from "./pages/IncomeHistory"; // ไฟล์ดูประวัติรายรับ
 
 /**
  * RoleRoute - wrapper component to protect routes by allowed roles
@@ -60,7 +65,7 @@ function AppRoutes() {
 
       {/* Dashboard */}
       <Route path="/dashboard" element={<Dashboard />} />
-
+      <Route path="/sites/history" element={<SiteHistory />} />
       {/* Site detail & related */}
       <Route path="/sites/:id" element={<SiteDetail />} />
       <Route path="/sites/:id/expenses" element={<ExpensesReport />} />
@@ -81,6 +86,32 @@ function AppRoutes() {
       <Route path="/expenses/pending" element={<PendingExpenses />} />
       <Route path="/expenses" element={<ExpenseDetail />} />
       <Route path="/sites/:siteId/expenses" element={<ExpenseDetail />} />
+
+      {/* ✅ Incomes (ระบบรายรับที่เพิ่มใหม่ พร้อมจำกัดสิทธิ์) */}
+      <Route 
+        path="/incomes/summary" 
+        element={
+          <RoleRoute allowedRoles={["admin", "CEO", "Secretary"]}>
+            <IncomeSummary />
+          </RoleRoute>
+        } 
+      />
+      <Route 
+        path="/incomes/add" 
+        element={
+          <RoleRoute allowedRoles={["admin", "CEO", "Secretary"]}>
+            <IncomeFormAdd />
+          </RoleRoute>
+        } 
+      />
+      <Route 
+        path="/incomes/history" 
+        element={
+          <RoleRoute allowedRoles={["admin", "CEO", "Secretary"]}>
+            <IncomeHistory />
+          </RoleRoute>
+        } 
+      />
 
       {/* Profile */}
       <Route path="/profile" element={<Profile />} />

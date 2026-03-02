@@ -1,14 +1,14 @@
+// src/pages/UserFormAdd.jsx
 import React, { useState } from "react";
 import axios from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, UserPlus, Mail, Lock, Phone, User, Tag, Shield, CheckCircle2 } from "lucide-react";
 import BottomNav from "../components/BottomNav";
 
 const API = import.meta.env.VITE_API_BASE;
 axios.defaults.withCredentials = true;
 
-const roles = ["admin", "CEO", "Secretary", "Foreman","audit"];
-
+const roles = ["admin", "CEO", "Secretary", "Foreman", "audit"];
 
 const UserFormAdd = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const UserFormAdd = () => {
     email: "",
     password: "",
     phone: "",
-    role: "staff",
+    role: "admin",
     display_name: "",
     first_name: "",
     last_name: "",
@@ -39,7 +39,7 @@ const UserFormAdd = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("สร้างผู้ใช้ใหม่เรียบร้อย");
-      navigate("/users/manage");
+      navigate("/users/manage"); // สำเร็จแล้วกลับไปหน้าจัดการ
     } catch (err) {
       console.error("❌ Failed to create user", err.response?.data || err);
       alert("ไม่สามารถสร้างผู้ใช้ได้: " + (err.response?.data?.message || ""));
@@ -47,53 +47,113 @@ const UserFormAdd = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-40 font-sans">
       {/* Top bar */}
-      <div className="mx-auto max-w-screen-sm px-4 pt-4 flex items-center gap-3">
-
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-100"
-        >
-          <ChevronLeft className="w-6 h-6 stroke-[3]" />
-          <span className="text-lg font-medium text-blue-600">Back</span>
-          
-          
-        </button>
-          <h2 className="text-xl font-bold text-center flex-1">เพิ่มผู้ใช้ใหม่</h2>
-        <div className="w-16" /> {/* spacer ให้ Title อยู่กลางจริงๆ */}
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="mx-auto max-w-screen-sm px-4 h-16 flex items-center justify-between">
+          <button
+            onClick={() => navigate("/users/manage")} // ✅ เปลี่ยนเป็น Route ไปหน้าจัดการโดยตรง
+            className="inline-flex items-center gap-1 text-blue-600 font-semibold hover:bg-blue-50 px-2 py-1 rounded-lg transition"
+          >
+            <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+            <span>Back</span>
+          </button>
+          <h2 className="text-xl font-bold text-gray-800">เพิ่มผู้ใช้ใหม่</h2>
+          <div className="w-16" />
+        </div>
       </div>
 
-      <div className="max-w-screen-sm mx-auto px-4 py-4">
-        
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-4 rounded-xl shadow space-y-3"
-        >
-          <input type="text" name="username" placeholder="Username" value={form.username} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2" />
-          <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2" />
-          <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required className="w-full border rounded-lg px-3 py-2" />
-          <input type="text" name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} className="w-full border rounded-lg px-3 py-2" />
-          <input type="text" name="display_name" placeholder="Display Name" value={form.display_name} onChange={handleChange} className="w-full border rounded-lg px-3 py-2" />
-          <input type="text" name="first_name" placeholder="First Name" value={form.first_name} onChange={handleChange} className="w-full border rounded-lg px-3 py-2" />
-          <input type="text" name="last_name" placeholder="Last Name" value={form.last_name} onChange={handleChange} className="w-full border rounded-lg px-3 py-2" />
-          <input type="text" name="nickname" placeholder="Nickname" value={form.nickname} onChange={handleChange} className="w-full border rounded-lg px-3 py-2" />
-          <input type="text" name="profile_picture" placeholder="Profile Picture URL" value={form.profile_picture} onChange={handleChange} className="w-full border rounded-lg px-3 py-2" />
+      <div className="max-w-screen-sm mx-auto px-4 py-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          
+          {/* Section: ข้อมูลบัญชี (Account Info) */}
+          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-4">
+            <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Lock className="w-4 h-4" /> ข้อมูลการเข้าสู่ระบบ
+            </h3>
+            
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Username *</label>
+              <input name="username" value={form.username} onChange={handleChange} required className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-100 outline-none font-semibold" placeholder="ชื่อผู้ใช้งาน" />
+            </div>
 
-          <select name="role" value={form.role} onChange={handleChange} className="w-full border rounded-lg px-3 py-2">
-            {roles.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Email *</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} required className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-100 outline-none font-semibold" placeholder="example@email.com" />
+            </div>
 
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} />
-            Active
-          </label>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Password *</label>
+              <input type="password" name="password" value={form.password} onChange={handleChange} required className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-blue-100 outline-none font-semibold" placeholder="••••••••" />
+            </div>
+          </div>
 
-          <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
-            สร้างผู้ใช้
-          </button>
+          {/* Section: ข้อมูลส่วนตัว (Personal Info) */}
+          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-4">
+            <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <User className="w-4 h-4" /> ข้อมูลส่วนตัวและสิทธิ์
+            </h3>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1">ชื่อที่แสดง (Display Name)</label>
+              <input name="display_name" value={form.display_name} onChange={handleChange} className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-100 outline-none font-semibold" placeholder="ชื่อเล่นหรือชื่อเรียก" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">ชื่อจริง</label>
+                <input name="first_name" value={form.first_name} onChange={handleChange} className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-100 outline-none font-semibold" placeholder="First Name" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">นามสกุล</label>
+                <input name="last_name" value={form.last_name} onChange={handleChange} className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-100 outline-none font-semibold" placeholder="Last Name" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">ชื่อเล่น</label>
+                <input name="nickname" value={form.nickname} onChange={handleChange} className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-100 outline-none font-semibold" placeholder="Nickname" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">เบอร์โทรศัพท์</label>
+                <input name="phone" value={form.phone} onChange={handleChange} className="w-full bg-gray-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-100 outline-none font-semibold" placeholder="08x-xxx-xxxx" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1 flex items-center gap-1">
+                <Shield className="w-3 h-3 text-purple-500" /> บทบาทผู้ใช้งาน
+              </label>
+              <select name="role" value={form.role} onChange={handleChange} className="w-full bg-purple-50 border-none rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-purple-100 outline-none font-bold text-purple-600 appearance-none">
+                {roles.map((r) => (
+                  <option key={r} value={r}>{r.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between px-2 pt-2">
+              <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
+                สถานะการใช้งาน
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                <span className="ml-3 text-sm font-bold text-green-600">{form.is_active ? "ACTIVE" : "INACTIVE"}</span>
+              </label>
+            </div>
+          </div>
+
+          {/* ✅ Floating Button: สร้างผู้ใช้ */}
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-screen-sm px-6">
+            <button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-black shadow-[0_10px_25px_rgba(22,163,74,0.4)] hover:bg-green-700 active:scale-95 transition-all uppercase tracking-widest border-2 border-white/20"
+            >
+              <UserPlus className="w-5 h-5" />
+              สร้างบัญชีผู้ใช้งานใหม่
+            </button>
+          </div>
         </form>
       </div>
 
